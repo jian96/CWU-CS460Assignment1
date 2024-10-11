@@ -60,11 +60,36 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         solutionBox.setText("Krai Pongrapeeporn");
 
     }
+
+    /**
+     * This is an auxiliary function, used to assign a MaterialButton object to its associated view component
+     * by attaching the ID of the view component
+     * @param btn The MaterialButton object
+     * @param id The id of the View component
+     */
     void assignID(MaterialButton btn, int id){
         btn = findViewById(id);
         btn.setOnClickListener(this);
     }
 
+    /**
+     * This function handles click events by overriding Views that implements OnClickListener
+     * It obtains the button being pressed and the current contents of the calculator Display
+     * Then it checks what button is being pressed, for AC, =, and C, special operations are executed
+     * AC - clears the Display and Solution Display
+     * = - Makes sure there is currently something in the Display, and then evaluates the string currently
+     *     in the Display, pushes the results onto the Solution Display, and clears the Display for further operations
+     * C - Erases the last character in Display, and makes sure there is something to erase. If only one character is
+     *     in display to erase, replaces it with zero
+     * If non of the special buttons have been clicked, appends the Display with whatever button was pressed
+     * The handler also checks if it's the first button click in the app, so that it can erase the initialization text
+     * This function relies on calculateData() to obtain the results, by passing a numerical expression to be evaluated
+     * by Javascript as code
+     * Because it is using the Javascript engine to evaluate numerical expressions, there can be some odd results
+     * such as numbers starting with 0 being treated as an octal number (base 8)
+     * @param view The View component being examined to perform operations, it is a MaterialButton and this button
+     *             is what the user clicks on
+     */
     @Override
     public void onClick(View view) {
         MaterialButton button = (MaterialButton) view;
@@ -87,8 +112,8 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         if (buttonText.equals("=") && dataToCalculate.length() > 0){
             String finalResult = calculateData(dataToCalculate);
             if (!finalResult.equals("Unexpected error")) {
-                solutionBox.setText(finalResult);  // Display the result
-                displayBox.setText("");  // Reset solution box
+                solutionBox.setText(finalResult);
+                displayBox.setText("");
             }
             return;
         }
@@ -98,29 +123,33 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
                 dataToCalculate = dataToCalculate.substring(0, dataToCalculate.length() - 1);
             }
             if (dataToCalculate.isEmpty()) {
-                solutionBox.setText("0");  // Reset to "0" when nothing is left
+                solutionBox.setText("0");
             } else {
-                solutionBox.setText(dataToCalculate);  // Display the updated input
+                solutionBox.setText(dataToCalculate);
             }
-            displayBox.setText(dataToCalculate);  // Update displayBox text
+            displayBox.setText(dataToCalculate);
             return;
         }
 
         if (!buttonText.equals("=")) {
-            dataToCalculate += buttonText;  // Append clicked button's text
-            displayBox.setText(dataToCalculate);  // Update solution box
+            dataToCalculate += buttonText;
+            displayBox.setText(dataToCalculate);
+            solutionBox.setText(dataToCalculate);
+            return;
         }
 
-        // Display the current data (before evaluation)
-        solutionBox.setText(dataToCalculate);
 
-        // Calculate and display the result after appending operators or digits
-/*        String finalResult = calculateData(dataToCalculate);
-        if (!finalResult.equals("Unexpected error")) {
-            solutionBox.setText(finalResult);  // Update the display with calculated result
-        }*/
+
     }
 
+    /**
+     * This function executes a string as Javascript code
+     * This is achieved by using Rhino, a Javascript engine used in Java applications
+     * First the function initializes a scope to execute the Javascript, sets the Optimization level for Rhino
+     * and then the Javascript code is executed.
+     * @param data This is the Javascript code in the form of a String
+     * @return The result of the evaluation is returned as a String
+     */
     String calculateData(String data){
         try {
             Context context = Context.enter();
